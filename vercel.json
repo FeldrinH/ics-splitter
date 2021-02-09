@@ -1,0 +1,5 @@
+{
+    "rewrites": [
+        { "source": "/filter", "destination": "/api/filter.go" }
+    ]
+}
