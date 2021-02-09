@@ -1,17 +1,13 @@
 package handler
 
 import (
-	"fmt"
-	//"os"
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
 )
-
-const continuedLinePrefix = ' '
-const labelSeparator = ' '
 
 var summaryPrefix = []byte("SUMMARY:")
 var eventBegin = []byte("BEGIN:VEVENT")
@@ -44,6 +40,16 @@ func constructFilterMap(filterStr string) map[byte]bool {
 		filterMap[filterStr[i]] = true
 	}
 	return filterMap
+}
+
+func stripLineEnding(data []byte) []byte {
+	if len(data) >= 1 && data[len(data)-1] == '\n' {
+		if len(data) >= 2 && data[len(data)-2] == '\r' {
+			return data[0 : len(data)-2]
+		}
+		return data[0 : len(data)-1]
+	}
+	return data
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -86,7 +92,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	isSummary := false
 	for {
 		line, err := body.ReadBytes('\n')
-		fmt.Println(line)
 		if err != nil && err != io.EOF {
 			http.Error(w, "Error recieving calendar", http.StatusInternalServerError)
 			return
@@ -95,32 +100,31 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		if isEvent {
 			eventBuffer = append(eventBuffer, line...)
 
+			if isSummary {
+				if line[0] == ' ' {
+					summaryBuilder.Write(stripLineEnding(line[1:]))
+				} else {
+					isSummary = false
+					summary := summaryBuilder.String()
+					label := summary[strings.LastIndexByte(summary, ' ')+1:]
+					includeEvent = filterFunc(label)
+				}
+			} else if bytes.HasPrefix(line, summaryPrefix) {
+				isSummary = true
+				summaryBuilder.Reset()
+				summaryBuilder.Write(stripLineEnding(line[len(summaryPrefix)+1:]))
+			}
+
 			if bytes.HasPrefix(line, eventEnd) {
 				isEvent = false
 				if includeEvent {
 					outBuffer = append(outBuffer, eventBuffer...)
 				}
-			} else {
-				if isSummary {
-					if line[0] == continuedLinePrefix {
-						summaryBuilder.Write(line[1 : len(line)-1])
-					} else {
-						isSummary = false
-						summary := summaryBuilder.String()
-						label := summary[strings.LastIndexByte(summary, labelSeparator)+1:]
-						includeEvent = filterFunc(label)
-					}
-				} else if bytes.HasPrefix(line, summaryPrefix) {
-					isSummary = true
-					summaryBuilder.Reset()
-					summaryBuilder.Write(line[len(summaryPrefix)+1 : len(line)-1])
-				}
 			}
 		} else if bytes.HasPrefix(line, eventBegin) {
 			isEvent = true
 			includeEvent = false
-			eventBuffer = eventBuffer[:0]
-			eventBuffer = append(eventBuffer, line...)
+			eventBuffer = append(eventBuffer[:0], line...)
 		} else {
 			outBuffer = append(outBuffer, line...)
 		}
