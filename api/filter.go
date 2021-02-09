@@ -22,6 +22,7 @@ var classifications = map[string]byte{
 	"praktikum":      'p',
 	"seminar":        's',
 	"praktika":       'i',
+	"e-õpe":          'e',
 	"eksam/arvestus": 'a',
 }
 
