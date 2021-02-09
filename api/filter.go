@@ -23,7 +23,10 @@ var classifications = map[string]byte{
 	"seminar":        's',
 	"praktika":       'i',
 	"e-õpe":          'e',
+	"kontrolltöö":    'k',
+	"kollokvium":     'q',
 	"eksam/arvestus": 'a',
+	"korduseksam":    'a',
 }
 
 func getClassification(label string) byte {
