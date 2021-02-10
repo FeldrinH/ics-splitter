@@ -82,14 +82,18 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to get calendar", http.StatusInternalServerError)
 		return
 	}
+	defer resp.Body.Close()
 
 	body := bufio.NewReader(resp.Body)
 	outBuffer := make([]byte, 0, 1024)
-	eventBuffer := make([]byte, 0, 256)
+
 	isEvent := false
-	includeEvent := false
-	summaryBuilder := strings.Builder{}
+	eventBuffer := make([]byte, 0, 256)
+
+	label := ""
 	isSummary := false
+	summaryBuilder := strings.Builder{}
+
 	for {
 		line, err := body.ReadBytes('\n')
 		if err != nil && err != io.EOF {
@@ -106,8 +110,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 				} else {
 					isSummary = false
 					summary := summaryBuilder.String()
-					label := summary[strings.LastIndexByte(summary, ' ')+1:]
-					includeEvent = filterFunc(label)
+					label = summary[strings.LastIndexByte(summary, ' ')+1:]
 				}
 			} else if bytes.HasPrefix(line, summaryPrefix) {
 				isSummary = true
@@ -117,13 +120,13 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 			if bytes.HasPrefix(line, eventEnd) {
 				isEvent = false
-				if includeEvent {
+				if filterFunc(label) {
 					outBuffer = append(outBuffer, eventBuffer...)
 				}
 			}
 		} else if bytes.HasPrefix(line, eventBegin) {
 			isEvent = true
-			includeEvent = false
+			label = ""
 			eventBuffer = append(eventBuffer[:0], line...)
 		} else {
 			outBuffer = append(outBuffer, line...)
@@ -136,6 +139,5 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/calendar; charset=UTF-8")
 	w.Header().Set("Content-Disposition", "inline; filename=\"calendar-filtered.ics\"")
-
 	w.Write(outBuffer)
 }
