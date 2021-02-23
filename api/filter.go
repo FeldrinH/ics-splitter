@@ -9,49 +9,6 @@ import (
 	"strings"
 )
 
-var summaryPrefix = []byte("SUMMARY:")
-var eventBegin = []byte("BEGIN:VEVENT")
-var eventEnd = []byte("END:VEVENT")
-
-var classifications = map[string]byte{
-	"loeng":          'l',
-	"praktikum":      'p',
-	"seminar":        's',
-	"praktika":       'i',
-	"e-õpe":          'e',
-	"kontrolltöö":    'k',
-	"kollokvium":     'q',
-	"eksam/arvestus": 'a',
-	"korduseksam":    'a',
-}
-
-func getClassification(label string) byte {
-	val, ok := classifications[label]
-	if ok {
-		return val
-	} else {
-		return 'x'
-	}
-}
-
-func constructFilterMap(filterStr string) map[byte]bool {
-	filterMap := make(map[byte]bool, len(filterStr))
-	for i := 0; i < len(filterStr); i++ {
-		filterMap[filterStr[i]] = true
-	}
-	return filterMap
-}
-
-func stripLineEnding(data []byte) []byte {
-	if len(data) >= 1 && data[len(data)-1] == '\n' {
-		if len(data) >= 2 && data[len(data)-2] == '\r' {
-			return data[0 : len(data)-2]
-		}
-		return data[0 : len(data)-1]
-	}
-	return data
-}
-
 func Handler(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	calendarId := params.Get("id")
@@ -60,29 +17,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var filterFunc func(string) bool
-	if include := params["include"]; len(include) > 0 {
-		filterMap := constructFilterMap(include[0])
-		filterFunc = func(label string) bool {
-			return filterMap[getClassification(label)]
-		}
-	} else if exclude := params["exclude"]; len(exclude) > 0 {
-		filterMap := constructFilterMap(exclude[0])
-		filterFunc = func(label string) bool {
-			return !filterMap[getClassification(label)]
-		}
-	} else {
-		filterFunc = func(label string) bool {
-			return true
-		}
-	}
-
 	resp, err := http.Get(fmt.Sprintf("https://www.is.ut.ee/pls/ois/ois.kalender?id_kalender=%s", calendarId))
 	if err != nil {
 		http.Error(w, "Failed to get calendar", http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()
+
+	filterFunc := createFilterFunc(params)
 
 	body := bufio.NewReader(resp.Body)
 	outBuffer := make([]byte, 0, 1024)
