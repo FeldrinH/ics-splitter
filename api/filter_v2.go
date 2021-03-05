@@ -52,7 +52,7 @@ func FilterV2(w http.ResponseWriter, r *http.Request) {
 
 			// If is description, append space for correct formatting
 			if isDescription {
-				eventBuffer = append(eventBuffer, ' ')
+				eventBuffer = append(eventBuffer, ' ', '\n')
 			}
 			// Append to event buffer
 			eventBuffer = append(eventBuffer, line...)
