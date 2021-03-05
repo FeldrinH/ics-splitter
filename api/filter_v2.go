@@ -44,8 +44,8 @@ func FilterV2(w http.ResponseWriter, r *http.Request) {
 		if isEvent {
 			eventBuffer = append(eventBuffer, line...)
 
-			if bytes.HasPrefix(line, helpers.SummaryPrefix) {
-				eventLabel = string(helpers.StripLineEnding(line[len(helpers.CategoryPrefix):]))
+			if bytes.HasPrefix(line, helpers.CategoriesPrefix) {
+				eventLabel = string(helpers.StripLineEnding(line[len(helpers.CategoriesPrefix):]))
 			} else if bytes.HasPrefix(line, helpers.EventEnd) {
 				isEvent = false
 				if filterFunc(eventLabel) {

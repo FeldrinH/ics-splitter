@@ -7,7 +7,7 @@ import (
 var EventBegin = []byte("BEGIN:VEVENT")
 var EventEnd = []byte("END:VEVENT")
 var SummaryPrefix = []byte("SUMMARY:")
-var CategoryPrefix = []byte("CATEGORIES:")
+var CategoriesPrefix = []byte("CATEGORIES:")
 
 var classifications = map[string]byte{
 	"loeng":          'l',
