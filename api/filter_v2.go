@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
 	"github.com/FeldrinH/ics-splitter/helpers"
 )
 
@@ -44,7 +45,7 @@ func FilterV2(w http.ResponseWriter, r *http.Request) {
 			eventBuffer = append(eventBuffer, line...)
 
 			if bytes.HasPrefix(line, helpers.SummaryPrefix) {
-				eventLabel = string(line[len(helpers.CategoryPrefix):])
+				eventLabel = string(helpers.StripLineEnding(line[len(helpers.CategoryPrefix):]))
 			} else if bytes.HasPrefix(line, helpers.EventEnd) {
 				isEvent = false
 				if filterFunc(eventLabel) {

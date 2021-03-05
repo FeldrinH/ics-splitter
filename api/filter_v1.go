@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
 	"github.com/FeldrinH/ics-splitter/helpers"
 )
 
