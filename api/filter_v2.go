@@ -34,6 +34,8 @@ func FilterV2(w http.ResponseWriter, r *http.Request) {
 	eventBuffer := make([]byte, 0, 256)
 	eventLabel := ""
 
+	isDescription := false
+
 	for {
 		line, err := body.ReadBytes('\n')
 		if err != nil && err != io.EOF {
@@ -42,12 +44,28 @@ func FilterV2(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if isEvent {
+			// Check if event has ended
+			if bytes.HasPrefix(line, helpers.EventEnd) {
+				isEvent = false
+				isDescription = false
+			}
+
+			// If is description, append space for correct formatting
+			if isDescription {
+				eventBuffer = append(eventBuffer, ' ')
+			}
+			// Append to event buffer
 			eventBuffer = append(eventBuffer, line...)
 
-			if bytes.HasPrefix(line, helpers.CategoriesPrefix) {
-				eventLabel = string(helpers.StripLineEnding(line[len(helpers.CategoriesPrefix):]))
-			} else if bytes.HasPrefix(line, helpers.EventEnd) {
-				isEvent = false
+			if isEvent {
+				// If event is ongoing, process various prefix based updates
+				if bytes.HasPrefix(line, helpers.CategoriesPrefix) {
+					eventLabel = string(helpers.StripLineEnding(line[len(helpers.CategoriesPrefix):]))
+				} else if bytes.HasPrefix(line, helpers.DescriptionPrefix) {
+					isDescription = true
+				}
+			} else {
+				// If event has ended, commit event to output buffer, if it matches filter
 				if filterFunc(eventLabel) {
 					outBuffer = append(outBuffer, eventBuffer...)
 				}

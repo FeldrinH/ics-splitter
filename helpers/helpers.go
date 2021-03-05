@@ -8,6 +8,7 @@ var EventBegin = []byte("BEGIN:VEVENT")
 var EventEnd = []byte("END:VEVENT")
 var SummaryPrefix = []byte("SUMMARY:")
 var CategoriesPrefix = []byte("CATEGORIES:")
+var DescriptionPrefix = []byte("DESCRIPTION:")
 
 var classifications = map[string]byte{
 	"loeng":          'l',
