@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
+	"github.com/FeldrinH/ics-splitter/helpers"
 )
 
-func Handler(w http.ResponseWriter, r *http.Request) {
+func FilterV2(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	calendarId := params.Get("id")
 	if len(calendarId) == 0 {
@@ -17,24 +17,21 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := http.Get(fmt.Sprintf("https://www.is.ut.ee/pls/ois/ois.kalender?id_kalender=%s", calendarId))
+	resp, err := http.Get(fmt.Sprintf("https://ois2.ut.ee/api/timetable/personal/link/%s/et", calendarId))
 	if err != nil {
 		http.Error(w, "Failed to get calendar", http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()
 
-	filterFunc := createFilterFunc(params)
+	filterFunc := helpers.CreateFilterFunc(params)
 
 	body := bufio.NewReader(resp.Body)
 	outBuffer := make([]byte, 0, 1024)
 
 	isEvent := false
 	eventBuffer := make([]byte, 0, 256)
-
-	label := ""
-	isSummary := false
-	summaryBuilder := strings.Builder{}
+	eventLabel := ""
 
 	for {
 		line, err := body.ReadBytes('\n')
@@ -46,29 +43,17 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		if isEvent {
 			eventBuffer = append(eventBuffer, line...)
 
-			if isSummary {
-				if line[0] == ' ' {
-					summaryBuilder.Write(stripLineEnding(line[1:]))
-				} else {
-					isSummary = false
-					summary := summaryBuilder.String()
-					label = summary[strings.LastIndexByte(summary, ' ')+1:]
-				}
-			} else if bytes.HasPrefix(line, summaryPrefix) {
-				isSummary = true
-				summaryBuilder.Reset()
-				summaryBuilder.Write(stripLineEnding(line[len(summaryPrefix)+1:]))
-			}
-
-			if bytes.HasPrefix(line, eventEnd) {
+			if bytes.HasPrefix(line, helpers.SummaryPrefix) {
+				eventLabel = string(line[len(helpers.CategoryPrefix):])
+			} else if bytes.HasPrefix(line, helpers.EventEnd) {
 				isEvent = false
-				if filterFunc(label) {
+				if filterFunc(eventLabel) {
 					outBuffer = append(outBuffer, eventBuffer...)
 				}
 			}
-		} else if bytes.HasPrefix(line, eventBegin) {
+		} else if bytes.HasPrefix(line, helpers.EventBegin) {
 			isEvent = true
-			label = ""
+			eventLabel = ""
 			eventBuffer = append(eventBuffer[:0], line...)
 		} else {
 			outBuffer = append(outBuffer, line...)
