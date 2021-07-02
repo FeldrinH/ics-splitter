@@ -58,7 +58,7 @@ func constructFilterFunc(config config, groupName string) (func(string) bool, er
 		return func(label string) bool {
 			return true
 		}, nil
-	case "exclude-group":
+	case "exclude-groups":
 		filterMap := make(map[string]bool, len(group.Values))
 		for _, excludeGroupName := range group.Values {
 			group, ok := config.Groups[excludeGroupName]
