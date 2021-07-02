@@ -1,5 +1,5 @@
 {
-    "url": "https://ois2.ut.ee/api/timetable/personal/link/<CALENDAR_ID>/et",
+    "calendar_url": "https://ois2.ut.ee/api/timetable/personal/link/<CALENDAR_ID>/et",
     "groups": {
         "kõik": {
             "mode": "all",

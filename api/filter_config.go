@@ -38,7 +38,10 @@ func loadConfig(configUrl string) (config, error) {
 }
 
 func constructFilterFunc(config config, groupName string) (func(string) bool, error) {
-	group := config.Groups[groupName]
+	group, ok := config.Groups[groupName]
+	if !ok {
+		return nil, errors.New("Group "+groupName+" not in config")
+	}
 
 	switch group.Mode {
 	case "include":
