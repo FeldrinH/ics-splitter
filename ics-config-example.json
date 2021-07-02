@@ -1,0 +1,29 @@
+{
+    "url": "https://ois2.ut.ee/api/timetable/personal/link/<CALENDAR_ID>/et",
+    "groups": {
+        "kõik": {
+            "mode": "all",
+            "values": []
+        },
+        "tööd": {
+            "mode": "include",
+            "values": ["kontrolltöö", "kollokvium", "eksam/arvestus"]
+        },
+        "järeltööd": {
+            "mode": "include",
+            "values": ["korduseksam"]
+        },
+        "praktikumid": {
+            "mode": "include",
+            "values": ["praktikum", "seminar", "praktika"]
+        },
+        "loengud": {
+            "mode": "include",
+            "values": ["loeng"]
+        },
+        "muu": {
+            "mode": "exclude-groups",
+            "values": ["tööd", "järeltööd", "praktikumid", "loengud"]
+        }
+    }
+}

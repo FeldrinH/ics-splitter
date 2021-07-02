@@ -1,6 +1,6 @@
 {
     "rewrites": [
-        { "source": "/filter", "destination": "/api/filter_v1.go" },
+        { "source": "/filter", "destination": "/api/filter_config.go" },
         { "source": "/filter/v1", "destination": "/api/filter_v1.go" },
         { "source": "/filter/v2", "destination": "/api/filter_v2.go" }
     ]
