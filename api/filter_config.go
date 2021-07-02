@@ -96,8 +96,8 @@ func FilterConfig(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing query parameter 'url'", http.StatusBadRequest)
 		return
 	}
-	group := params.Get("group")
-	if len(group) == 0 {
+	groupName := params.Get("group")
+	if len(groupName) == 0 {
 		http.Error(w, "Missing query parameter 'group'", http.StatusBadRequest)
 		return
 	}
@@ -108,9 +108,9 @@ func FilterConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filterFunc, err := constructFilterFunc(config, group)
+	filterFunc, err := constructFilterFunc(config, groupName)
 	if err != nil {
-		http.Error(w, "Failed to process config for group "+group+": "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to process config for group "+groupName+": "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -169,6 +169,6 @@ func FilterConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/calendar; charset=UTF-8")
-	w.Header().Set("Content-Disposition", "inline; filename=\"calendar-filtered.ics\"")
+	w.Header().Set("Content-Disposition", "inline; filename=\"calendar-filtered-"+groupName+".ics\"")
 	w.Write(outBuffer)
 }
