@@ -24,7 +24,10 @@ type group struct {
 func loadConfig(configUrl string) (config, error) {
 	resp, err := http.Get(configUrl)
 	if err != nil {
-		return config{}, errors.New("HTTP error when loading config from " + configUrl)
+		return config{}, errors.New("Networking error when loading config from " + configUrl)
+	}
+	if resp.StatusCode > 299 {
+		config{}, errors.New("HTTP error when loading config from " + configUrl)
 	}
 	defer resp.Body.Close()
 
@@ -116,10 +119,14 @@ func FilterConfig(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := http.Get(config.CalendarUrl)
 	if err != nil {
-		http.Error(w, "HTTP error when loading calendar from "+config.CalendarUrl, http.StatusInternalServerError)
+		http.Error(w, "Networking error when loading calendar from "+config.CalendarUrl, http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode > 299 {
+		http.Error(w, "HTTP error when loading calendar from "+config.CalendarUrl, http.StatusInternalServerError)
+		return
+	}
 
 	body := bufio.NewReader(resp.Body)
 	outBuffer := make([]byte, 0, 1024)
