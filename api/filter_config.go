@@ -27,7 +27,7 @@ func loadConfig(configUrl string) (config, error) {
 		return config{}, errors.New("Networking error when loading config from " + configUrl)
 	}
 	if resp.StatusCode > 299 {
-		config{}, errors.New("HTTP error when loading config from " + configUrl)
+		return config{}, errors.New("HTTP error when loading config from " + configUrl)
 	}
 	defer resp.Body.Close()
 
